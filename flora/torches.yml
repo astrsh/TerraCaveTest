@@ -1,0 +1,6 @@
+id: TORCHES
+layers:
+  - materials: "minecraft:torch"
+    layers: 1
+spawnable: ["minecraft:stone"]
+replaceable: ["minecraft:air"]

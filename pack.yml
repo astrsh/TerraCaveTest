@@ -1,0 +1,165 @@
+id: CAVETEST
+author: Astrash
+version: 1.0.0
+
+biomes:
+  type: SINGLE
+  biome: TERRAIN
+
+beta:
+  carving: true
+
+noise:
+
+  # Noise that produces dots, used in producing speleothems for noise caves
+  cavePillars:
+    type: Linear
+    min: 0.98
+    max: 1
+    function:
+      type: Clamp
+      min: 0.98
+      max: 1
+      function:
+        type: Expression
+        equation: "-cell(x, z)"
+        functions:
+          cell:
+            type: Cellular
+            return: Distance
+            frequency: 0.05
+
+  # Basic 2D simplex noise
+  simplex2:
+    dimensions: 2
+    type: Linear
+    min: -0.9
+    max: 0.9
+    function:
+      type: FBM
+      octaves: 4
+      function:
+        type: OpenSimplex2
+        frequency: 0.0075
+  
+  # Basic 3D simplex noise
+  simplex3:
+    dimensions: 3
+    type: FBM
+    octaves: 2
+    function:
+      type: OpenSimplex2
+      frequency: 0.0075
+
+functions:
+
+  floorMod:
+    arguments: [a, b]
+    function: "a - floor(a / b) * b"
+
+  # Equations used to determine the profile of terraces
+
+  linearStepProfile:
+    arguments: [a]
+    function: "|a - 0.5| - 0.5"
+
+  parabolicStepProfile:
+    arguments: [a]
+    function: "(a - 0.5)^2 - 0.25"
+
+  curvyLinearStepProfile:
+    arguments: [a]
+    function: |
+      if(0.25 < a && a < 0.75,
+        2*(a-0.5)^2-0.375,
+        |a - 0.5| - 0.5
+      )
+
+  lippedBaseStepProfile:
+    arguments: [a]
+    function: |
+      min(
+        -0.5 * a,
+        3 * (a - 0.5)^2 - 0.5
+      )
+
+  stepClamp:
+    arguments: [a]
+    function: "if(0 <= a && a < 1, a, 0)"
+
+  # Returns a stepped version of the input,
+  # used primarily for creating terraced terrain.
+  step:
+    arguments: 
+      - i  # Input
+      - sc # Scale
+      - o  # Offset
+      - g  # Gap
+    function: "sc * linearStepProfile(stepClamp(floorMod(i / sc - o, 1 + g))) + i"
+
+  # Same as the above but using a parabolic profile
+  stepParabolic:
+    arguments: 
+      - i  # Input
+      - sc # Scale
+      - o  # Offset
+      - g  # Gap
+    function: "sc * parabolicStepProfile(stepClamp(floorMod(i / sc - o, 1 + g))) + i"
+
+  stepLipped:
+    arguments: 
+      - i  # Input
+      - sc # Scale
+      - o  # Offset
+      - g  # Gap
+    function: "sc * lippedBaseStepProfile(stepClamp(floorMod(i / sc - o, 1 + g))) + i"
+
+
+  # Same as the above but using a linear profile smoothed with a parabola
+  stepFancy:
+    arguments: 
+      - i  # Input
+      - sc # Scale
+      - o  # Offset
+      - g  # Gap
+    function: "sc * curvyLinearStepProfile(stepClamp(floorMod(i / sc - o, 1 + g))) + i"
+
+  # Paralithic sigmoid uses wrong formula :poob:
+  pack_sigmoid:
+    arguments: [a]
+    function: "1/(1+euler^(-a))"
+
+  partialStep:  
+    arguments:
+      - input  # The number to be stepped
+      - height # Height of each step
+      - ratio  # Ratio between stepped segments and non-stepped segments
+    function: |
+      min (
+        input,
+        round (input/height - ratio) * height
+      )
+
+  # Smooth clamp Returns a value between 0 - 1
+  # 2 mirrored sigmoid functions translated
+  # based off upper / lower bound
+  sigmoidClamp:
+    arguments:
+      - value # Input value
+      - lowerBound
+      - upperBound
+      - smooth # How smooth transitions are from 0 to 1
+    function: |
+      min(
+        1/((euler^(-(( value - lowerBound)/(((upperBound - lowerBound)*smooth)/12))))+1), // The 12 is an arbitrary constant
+        1/((euler^(-((-value + upperBound)/(((upperBound - lowerBound)*smooth)/12))))+1)  // that tweaks the maximum 'smoothness'
+      )
+
+  # Return 1 if input is between range
+  clamp:
+    arguments:
+      - x
+      - lowerBound
+      - upperBound
+    function: |
+      if(lowerBound > x || x > upperBound,0,1)

@@ -1,0 +1,5 @@
+id: TERRAIN
+vanilla: PLAINS
+extends: DECORATION
+
+noise-equation: "1" # Land everywhere

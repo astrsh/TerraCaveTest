@@ -1,0 +1,46 @@
+id: DECORATION
+abstract: true
+extends: CARVING
+
+lavaLevel: &lavaLevel 100
+
+palette:
+  - "BLOCK:minecraft:stone": 255
+  - "BLOCK:minecraft:bedrock": 0
+
+flora:
+  -
+    items: LAVA
+    density: 100
+    y: { min: 0, max: *lavaLevel }
+  -
+    items: TORCHES
+    density: 0.5
+    y: { min: 0, max: 255 }
+
+ores:
+  DIRT:
+    min: 0
+    max: 6
+    min-height: 0
+    max-height: 255
+  GRAVEL:
+    min: 0
+    max: 6
+    min-height: 0
+    max-height: 255
+  DIORITE:
+    min: 0
+    max: 28
+    min-height: 0
+    max-height: 255
+  ANDESITE:
+    min: 0
+    max: 28
+    min-height: 0
+    max-height: 255
+  GRANITE:
+    min: 0
+    max: 28
+    min-height: 0
+    max-height: 255

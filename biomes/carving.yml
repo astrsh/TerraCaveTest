@@ -1,0 +1,62 @@
+id: CARVING
+abstract: true
+
+variables:
+  carvingThreshold: 0.5 # Higher = less carving
+  carvingMinHeight: 20
+  carvingMaxHeight: 235
+  carvingClampTaper: 3
+  carvingMax: 1 # Caps the amount of base carving
+
+  cheeseStrength: 1
+  cheeseHorizontalFrequency: 1.5
+  cheeseVerticalFrequency:   3
+
+  pillarStrength: 0.5
+
+beta:
+  carving:
+    equation: | # If positive, carve area
+      -carvingThreshold
+      +(
+        // Base carving ----------------------------------------------
+        //   Carving before masks and pillars are applied.
+        //   Assumes a range of [0, carvingMax]
+        // -----------------------------------------------------------
+        min(carvingMax,
+        
+          // Cheese caves - assumes a range of [0, cheeseStrength]
+          (simplex3(
+            x * cheeseHorizontalFrequency,
+            step(y + simplex2(x, z) * 5, 34, 0, 0) * cheeseVerticalFrequency,
+            z * cheeseHorizontalFrequency
+          )+1)/2 // Linear redistribute
+          * cheeseStrength
+
+          // Spaghetti caves WIP - assumes a range of [0, cheeseStrength]
+          //+sigmoidClamp(
+          //  simplex3(
+          //    x / 5,
+          //    y / 5,
+          //    z / 5
+          //  ),
+          //  -0.1, 0.1, 1
+          //)
+
+        )
+
+        // Pillars ---------------------------------------------------
+        //   Subtracts from base carving to produce pillars
+        // -----------------------------------------------------------
+        -(cavePillars(
+            // Randomly adjust frequency of pillars via noise function
+            x*(4 + simplex2(x/3, z/3)*2),
+            z*(4 + simplex2(x/3, z/3)*2))
+        +1)/2 // Linear redistribute
+        * pillarStrength
+      )
+
+      // Carving mask ------------------------------------------------
+      //   Multiplies everything by a mask
+      // -------------------------------------------------------------
+      * sigmoidClamp(y, carvingMinHeight, carvingMaxHeight, carvingClampTaper)
